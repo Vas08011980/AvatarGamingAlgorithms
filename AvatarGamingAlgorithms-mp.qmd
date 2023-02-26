@@ -26,6 +26,7 @@ library(rstatix)
 library(rcompanion)
 library(broom)
 library(knitr)
+library(discrim)
 
 library(here)
 
@@ -175,10 +176,7 @@ test_data_GD_b<-bake(GD_rec, new_data = test_data_GD)
 Introduce Models
 
 ```{r}
-echo=FALSE
-error=FALSE
-warning=FALSE
-options(scipen = 999, digits=3, max.print=999999, show.signif.stars=TRUE)
+
 set.seed(123)
 
 ## token model
@@ -188,7 +186,7 @@ twt_null <- null_model()%>%
 
 
 ## model specification
-lasso_spec <- multinom_reg(penalty = tune(), mixture = 1)%>%
+lasso_spec <- multinom_reg(penalty = 0.1, mixture = 1)%>%
   set_mode("classification")%>%
   set_engine("glmnet")
 
@@ -221,10 +219,7 @@ svm_spec <- svm_rbf(mode = "classification",
 Mixing Recipes and Models to Create Workflows
 
 ```{r}
-echo=FALSE
-error=FALSE
-warning=FALSE
-options(scipen = 999, digits=3, max.print=999999, show.signif.stars=TRUE)
+
 set.seed(123)
 #Null
 Null_workflow <- workflow() %>% 
@@ -255,23 +250,21 @@ Kernel_workflow<-workflow() %>%
 Fitting Workflows in Training Data
 
 ```{r}
-echo=FALSE
-error=FALSE
-warning=FALSE
-options(scipen = 999, digits=3, max.print=999999, show.signif.stars=TRUE)
+
+
 
 Null_fit<-Null_workflow%>%fit(train_data_GD_b)
 Null_fit  
-#Lasso_fit<-lasso_workflow%>%fit(train_data_GD_b)
-#Lasso_fit
+Lasso_fit<-lasso_workflow%>%fit(train_data_GD_b)
+Lasso_fit
 RF_fit<-RF_workflow%>%fit(train_data_GD_b)
 RF_fit
 LogReg_fit<-LOGGLM_workflow%>%fit(train_data_GD_b)
 LogReg_fit
 Kernel_fit<-Kernel_workflow%>%fit(train_data_GD_b)
 Kernel_fit
-#NB_fit<-NB_workflow%>%fit(train_data_GD_b)
-#NB_fit
+NB_fit<-NB_workflow%>%fit(train_data_GD_b)
+NB_fit
 ```
 
 Predict Results on the Testing Data Prior Tuning
@@ -307,18 +300,18 @@ results_Kern<-test_data_GD_b %>% select(GDDiag) %>%
               predict(new_data = test_data_GD_b, type = "prob"))
 
 #Lasso
-#results_Lasso<-test_data_GD_b %>% select(GDDiag) %>% 
-  #bind_cols( Lasso_fit%>% 
-              #predict(new_data = test_data_GD_b)) %>% 
-  #bind_cols( Lasso_fit%>% 
-             # predict(new_data = test_data_GD_b, type = "prob"))
+results_Lasso<-test_data_GD_b %>% select(GDDiag) %>% 
+  bind_cols( Lasso_fit%>% 
+              predict(new_data = test_data_GD_b)) %>% 
+  bind_cols( Lasso_fit%>% 
+              predict(new_data = test_data_GD_b, type = "prob"))
 
 #NB_Fit
-#result_NB <- test_data_GD_b %>% select(GDDiag) %>% 
- # bind_cols(NB_fit %>% 
-  #            predict(new_data = test_data_GD_b)) %>% 
-  #bind_cols( NB_fit%>% 
-   #           predict(new_data = test_data_GD_b, type = "prob"))
+result_NB <- test_data_GD_b %>% select(GDDiag) %>% 
+  bind_cols(NB_fit %>% 
+              predict(new_data = test_data_GD_b)) %>% 
+  bind_cols( NB_fit%>% 
+              predict(new_data = test_data_GD_b, type = "prob"))
 ```
 
 Get the Prediction Fit for its Classification Algorithm Tested
